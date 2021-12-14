@@ -1,6 +1,42 @@
+This is a project to implement a Json Web Token based authentication to consume a
+REST API written with Java Spring Boot. The first part was directly using hardcoded
+Java singleton objects instead of a database to just experiment with the Jwt implementation.
+I plan to use a SQLlite database in the future (work in progress).
+
+BUILD
+=====
+
 mvn clean
 
 mvn spring-boot:run
+
+
+TEST
+===
+
+POST application/json
+https://localhost:3000/api/authenticate
+
+{
+	"username": "fabrice",
+	"password": "1234"
+}
+
+RESPONSE 200 OK:
+{
+	"token": "<...>"
+}
+
+Use the JWT token <...> received after authentication to consume the API
+
+GET
+Bearer Token <...>
+https://localhost:3000/api/entries
+
+Should return a 200 OK with the expected entries from the backend as application/json
+
+If the token is invalid, you'll get a 401 Unauthorized
+
 
 NOTES
 =====
