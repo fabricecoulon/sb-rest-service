@@ -18,10 +18,43 @@ import io.jsonwebtoken.SignatureAlgorithm;
 public class JwtUtil implements Serializable {
 	private static final long serialVersionUID = -2550185165626007488L;
 	
-	public static final long JWT_TOKEN_VALIDITY = 5*60*60;
+	public static final long JWT_TOKEN_VALIDITY_IN_SECONDS = 5*60*60;  // 5 hours
+	public static final long JWT_TOKEN_REFRESH_IN_SECONDS = 2*60*60;  // 2 hours
+
+	private String secret;
+	private long tokenValidityInSeconds = -1;
+	private long refreshExpirationDateInSeconds = -1;
 
 	@Value("${jwt.secret}")
-	private String secret;
+	public void setSecret(String secret) {
+		this.secret = secret;
+	}
+
+	//@Value("#{T(Long).parseLong('${jwt.tokenValidityInSeconds}')}")
+	@Value("${jwt.tokenValidityInSeconds}")
+	public void setJwtExpirationInSeconds(long tokenValidityInSeconds) {
+		this.tokenValidityInSeconds = tokenValidityInSeconds;
+	}
+
+	@Value("${jwt.refreshExpirationDateInSeconds}")
+	public void setRefreshExpirationDateInSeconds(long refreshExpirationDateInSeconds) {
+		this.refreshExpirationDateInSeconds = refreshExpirationDateInSeconds;
+	}
+
+	private long getTokenValidityInSeconds() {
+		if (this.tokenValidityInSeconds == -1) {
+			return JWT_TOKEN_VALIDITY_IN_SECONDS;
+		}
+		return this.tokenValidityInSeconds;
+	}
+
+	private long getTokenRefreshExpirationDateInSeconds() {
+		if (this.refreshExpirationDateInSeconds == -1) {
+			return JWT_TOKEN_REFRESH_IN_SECONDS;
+		}
+		return this.refreshExpirationDateInSeconds;
+	}
+
 
 	public String getUsernameFromToken(String token) {
 		return getClaimFromToken(token, Claims::getSubject);
@@ -61,13 +94,23 @@ public class JwtUtil implements Serializable {
 
 	private String doGenerateToken(Map<String, Object> claims, String subject) {
 
+		// return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
+		// 		.setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY_IN_SECONDS*1000)).signWith(SignatureAlgorithm.HS512, secret).compact();
 		return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-				.setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY*1000)).signWith(SignatureAlgorithm.HS512, secret).compact();
+				.setExpiration(new Date(System.currentTimeMillis() + this.getTokenValidityInSeconds()*1000)).signWith(SignatureAlgorithm.HS512, secret).compact();
 	}
 
-	public Boolean canTokenBeRefreshed(String token) {
-		return (!isTokenExpired(token) || ignoreTokenExpiration(token));
+	public String doGenerateRefreshToken(Map<String, Object> claims, String subject) {
+
+		return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
+				.setExpiration(new Date(System.currentTimeMillis() + this.getTokenRefreshExpirationDateInSeconds()*1000))
+				.signWith(SignatureAlgorithm.HS512, secret).compact();
+
 	}
+
+	// public Boolean canTokenBeRefreshed(String token) {
+	// 	return (!isTokenExpired(token) || ignoreTokenExpiration(token));
+	// }
 
 	public Boolean validateToken(String token, UserDetails userDetails) {
 		final String username = getUsernameFromToken(token);
