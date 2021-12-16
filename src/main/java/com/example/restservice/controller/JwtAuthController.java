@@ -74,7 +74,9 @@ public class JwtAuthController {
 	public ResponseEntity<?> refreshtoken(HttpServletRequest request) throws Exception {
 		// From the HttpRequest get the claims
 		DefaultClaims claims = (io.jsonwebtoken.impl.DefaultClaims) request.getAttribute("claims");
-
+		if (claims == null) {
+			return ResponseEntity.badRequest().build();
+		}
 		Map<String, Object> expectedMap = this.getMapFromIoJsonwebtokenClaims(claims);
 		String token = jwtTokenUtil.doGenerateRefreshToken(expectedMap, expectedMap.get("sub").toString());
 		return ResponseEntity.ok(new JwtResponse(token));
@@ -82,8 +84,10 @@ public class JwtAuthController {
 
 	public Map<String, Object> getMapFromIoJsonwebtokenClaims(DefaultClaims claims) {
 		Map<String, Object> expectedMap = new HashMap<String, Object>();
-		for (Entry<String, Object> entry : claims.entrySet()) {
-			expectedMap.put(entry.getKey(), entry.getValue());
+		if (claims != null) {
+			for (Entry<String, Object> entry : claims.entrySet()) {
+				expectedMap.put(entry.getKey(), entry.getValue());
+			}
 		}
 		return expectedMap;
 	}

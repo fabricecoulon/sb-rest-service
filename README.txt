@@ -1,7 +1,9 @@
 This is a project to implement a Json Web Token based authentication to consume a
 REST API written with Java Spring Boot. The first part was directly using hardcoded
 Java singleton objects instead of a database to just experiment with the Jwt implementation.
-I plan to use a SQLlite database in the future (work in progress).
+I plan to use a SQLite database in the future (work in progress).
+https://www.baeldung.com/spring-boot-sqlite
+
 
 https://jwt.io/
 

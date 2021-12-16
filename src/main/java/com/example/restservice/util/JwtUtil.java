@@ -82,10 +82,10 @@ public class JwtUtil implements Serializable {
 		return expiration.before(new Date());
 	}
 
-	private Boolean ignoreTokenExpiration(String token) {
-		// here you specify tokens, for that the expiration is ignored
-		return false;
-	}
+	// private Boolean ignoreTokenExpiration(String token) {
+	// 	// here you specify tokens, for that the expiration is ignored
+	// 	return false;
+	// }
 
 	public String generateToken(UserDetails userDetails) {
 		Map<String, Object> claims = new HashMap<>();
