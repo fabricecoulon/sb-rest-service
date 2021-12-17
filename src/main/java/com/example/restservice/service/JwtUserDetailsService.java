@@ -3,9 +3,11 @@ package com.example.restservice.service;
 import java.util.ArrayList;
 
 import com.example.restservice.singleton.UsersSingleton;
+import com.example.restservice.daos.UserDAO;
 import com.example.restservice.model.UserFromDB;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,21 +20,39 @@ public class JwtUserDetailsService implements UserDetailsService {
 	@Autowired
 	UsersSingleton us;
 
+	@Value("${usesqlite}")
+	Boolean usesqlite;
+
+	@Autowired
+	UserDAO userDAO;
+
 	@Override
 	public UserDetails loadUserByUsername(String aUsername) throws UsernameNotFoundException {
-		UserFromDB userFromDb = us.users.stream().filter(u -> u.getUsername().equals(aUsername)).findFirst().orElse(null);  // model.User
-		/*if ("javainuse".equals(aUsername)) {
-			// org.springframework.security.core.userdetails.User
-			return new User("javainuse", "$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6",
-					new ArrayList<>());
-		} else {
-			throw new UsernameNotFoundException("User not found with username: " + aUsername);
-		}*/
+		UserFromDB userFromDB = null;
+		com.example.restservice.model.User user = null;
 		UserDetails newUser = null;
-		if (userFromDb != null) {
-			newUser = new User(userFromDb.getUsername(), userFromDb.getHashpass(), new ArrayList<>());
+
+		if (!usesqlite) {
+			userFromDB = us.users.stream().filter(u -> u.getUsername().equals(aUsername)).findFirst().orElse(null);
 		} else {
-			throw new UsernameNotFoundException("User not found with username: " + aUsername);
+			//user = userDAO.findUserByName(aUsername);
+			//user = userDAO.findUserByNameWithParamsAndMapper(aUsername);
+			user = userDAO.findUserByNameWithBeanPropertyRowMapper(aUsername);
+			
+		}
+
+		if (!usesqlite) {
+			if (userFromDB != null) {
+				newUser = new User(userFromDB.getUsername(), userFromDB.getHashpass(), new ArrayList<>());
+			} else {
+				throw new UsernameNotFoundException("User not found with username: " + aUsername);
+			}
+		} else {
+			if (user != null) {
+				newUser = new User(user.getUsername(), user.getHashpass(), new ArrayList<>());
+			} else {
+				throw new UsernameNotFoundException("User not found with username: " + aUsername);
+			}
 		}
 		return newUser;
 	}

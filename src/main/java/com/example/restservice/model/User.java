@@ -1,16 +1,15 @@
 package com.example.restservice.model;
 
-/* Simulate a user from the database */
-public class UserFromDB {
+public class User {
     private long id;
     private String username;
     private String hashpass;
-    public UserFromDB(String username, String hashpass) {
+    public User(String username, String hashpass) {
         this.id = -1;
         this.username = username;
         this.hashpass = hashpass;
     }
-    public UserFromDB() {
+    public User() {
         this.id = -1;
         this.username = "";
         this.hashpass = "";
