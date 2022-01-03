@@ -23,7 +23,7 @@ public class RoleDAO {
 
     public void createTable() {
         try (Connection con = connUtil.getConnection()) {
-            String createQuery = "CREATE TABLE IF NOT EXISTS user_roles (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+            String createQuery = "CREATE TABLE IF NOT EXISTS user_roles (id INTEGER PRIMARY KEY NOT NULL, " +
                 " user_id INT NOT NULL, " +
                 " role INT NOT NULL)";
             PreparedStatement pstmt = con.prepareStatement(createQuery);
