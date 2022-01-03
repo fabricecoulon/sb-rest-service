@@ -11,17 +11,18 @@ import java.util.Map;
 
 import com.example.restservice.model.User;
 import com.example.restservice.util.ConnectionUtil;
+import com.example.restservice.util.DbUtil;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
+//import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
-class UserMapper implements RowMapper {
+class UserMapper implements RowMapper<User> {
 
     @Override
     public User mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -37,6 +38,8 @@ class UserMapper implements RowMapper {
 @Component
 public class UserDAO /*extends DaoItf*/ {
 
+    public static final String USERS_TABLE = "users";
+
     private static Log logger = LogFactory.getLog(UserDAO.class.getName());
 
     @Autowired ConnectionUtil connUtil;
@@ -44,18 +47,21 @@ public class UserDAO /*extends DaoItf*/ {
     @Autowired
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    //@Autowired
+    //private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private DbUtil dbUtil;
+    
     public void createTable() {
         // try-with-resources Statement  Any object that implements java.lang.AutoCloseable can be used as a resource
         // it will automatically do a finally { resource.close(); }
         //try (Connection con = ConnectionUtil.getConnection()) {
         try (Connection con = connUtil.getConnection()) {
             String createQuery = "CREATE TABLE IF NOT EXISTS users (" +
-            "    id INT PRIMARY KEY     NOT NULL," +
+            "    id INTEGER PRIMARY KEY NOT NULL," +
             "    username           TEXT    NOT NULL," +
-            "   hashpass TEXT    NOT NULL" +
+            "   hashpass            TEXT    NOT NULL" +
             ")";
             PreparedStatement pstmt = con.prepareStatement(createQuery);
 
@@ -67,17 +73,26 @@ public class UserDAO /*extends DaoItf*/ {
 
     }
 
-    public void add(User user) {
+    public User add(User user) {
+        User newUser = new User(user.getUsername(), user.getHashpass());
+        if (user.getId() <= 0) {
+            long newId = dbUtil.get_new_id(UserDAO.USERS_TABLE);
+            newUser.setId(newId);
+        } else {
+            newUser.setId(user.getId());
+        }
         try (Connection con = connUtil.getConnection()) {
-
-            String insertQuery = "INSERT INTO users(name) VALUES(?,?)";
+            String insertQuery = "INSERT INTO users(id, username, hashpass) VALUES(?,?,?)";
             PreparedStatement pstmt = con.prepareStatement(insertQuery);
-            pstmt.setString(2, user.getUsername());
-
+            pstmt.setLong(1, newUser.getId());
+            pstmt.setString(2, newUser.getUsername());
+            pstmt.setString(3, newUser.getHashpass());
             pstmt.executeUpdate();
         } catch (SQLException exc) {
-            logger.error(exc.getMessage());
+            logger.error(exc.getMessage());            
+            return newUser;
         }
+        return newUser;
     }
 
     public List<User> findAll() {
